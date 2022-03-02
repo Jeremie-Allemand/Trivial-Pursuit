@@ -1,18 +1,39 @@
-
 <html>
     <head>
-        <title>Admin</title>
+        <title>Client</title>
     </head>
     <body>
+        <div id="nologin">
+            <label for="username">Nom d'utilisateur</label><br>
+            <input type="text" id="username" name="username" value=""><br>
+            <input type="button" value="Connexion" onclick="login()">
+        </div>
+
+        <div id="answer" style="display:none;">
+            <button onclick="answer(0)">0</button>
+            <button onclick="answer(1)">1</button>
+            <button onclick="answer(2)">2</button>
+            <button onclick="answer(3)">3</button>
+        </div>
+
+        <div id="wait" style="display:none;">
+           <h1>Patientez</h1> 
+        </div>
+
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js" integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.0/axios.js" integrity="sha512-MNW6IbpNuZZ2VH9ngFhzh6cUt8L/0rSVa60F8L22K1H72ro4Ki3M/816eSDLnhICu7vwH/+/yb8oB3BtBLhMsA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script>
             server = "http://"+ window.location.hostname + ":3001"
+            const socket = io(server)
             
-            function start() {
+            socket.on('GAMESTART' ,() => {
+                document.getElementById("answer").style.display = "block"
+            })
+
+            function login() {
                 const name = document.getElementById('username').value 
                 //requête http
-                axios.post(server+"/start",{username:name, socket_id:socket.id})
+                axios.post(server+"/addplayer",{username:name, socket_id:socket.id})
                 .then(result => {
                     if(result.data.login === "OK"){
                         //on cache la div de login puis on montre la div d'attente
@@ -29,6 +50,14 @@
                     console.log(err.message)
                 })
             }
+
+            function answer(option){
+                console.log(option)
+                document.getElementById("wait").style.display = "block"
+                document.getElementById("answer").style.display = "none"
+                socket.emit('ANSWER', option)
+            }
+
         </script>
     </body>
 </html>

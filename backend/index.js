@@ -13,15 +13,19 @@ const io = require('socket.io')(http,{
 const PORT = process.env.PORT || 3001
 app.use(express.json());
 app.use(cors())
+//variable et listes globales
 global.players = []
 global.familles = []
 global.questions = []
 global.socket_io = io
 
+//Route pour les requêtes http
 require('./routes/game.route')(app)
 require('./routes/player.route')(app)
-app.use('/', function(req,res){
-  res.sendFile(__dirname+'/client/login.html')
+
+//Page web
+app.use('/', (req,res) => {
+  res.sendFile(__dirname+'/client/index.html')
 })
 
 ///Fonction pour importer les CSV
@@ -66,9 +70,9 @@ http.listen(PORT, () =>
 io.on('connection', socket =>{
   console.log(`client ${socket.id} connected`)
 
-  socket.on('GREET', (data) =>{
-    console.log(data.data)
-    socket.emit('GREET', {data:"Bonjour socket"}) 
+  //Event de réponse au question
+  socket.on('ANSWER', (data) =>{
+    console.log(data)
   })
 
 
