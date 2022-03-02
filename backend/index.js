@@ -17,16 +17,12 @@ app.use(cors())
 global.players = []
 global.familles = []
 global.questions = []
+global.link = __dirname + "/client"
 global.socket_io = io
 
 //Route pour les requêtes http
 require('./routes/game.route')(app)
 require('./routes/player.route')(app)
-
-//Page web
-app.use('/', (req,res) => {
-  res.sendFile(__dirname+'/client/index.html')
-})
 
 ///Fonction pour importer les CSV
 const importCSV = () => {
