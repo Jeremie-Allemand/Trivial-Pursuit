@@ -11,7 +11,6 @@ const io = require('socket.io')(http,{
 })
 
 const PORT = process.env.PORT || 3001
-var loaded = false
 app.use(express.json());
 app.use(cors())
 global.players = []
@@ -21,22 +20,30 @@ global.socket_io = io
 
 require('./routes/game.route')(app)
 require('./routes/player.route')(app)
+app.use('/', function(req,res){
+  res.sendFile(__dirname+'/client/login.html')
+})
 
-
+///Fonction pour importer les CSV
 const importCSV = () => {
   const fs = require('fs')
+  //Lecture du fichier csv
   fs.readFile('questions.csv', 'utf-8' , (err, file) => {
+    //return s'il y a une erreur
     if (err) {
       console.error(err)
       return
     }
-    console.log(file)
+    //séparation par line ligne
     const rows = file.toString().trim().split('\r\n')
     var splited = []
+    //sépartation avec les ";"
     rows.forEach((item) => {
       splited.push(item.split(';'))
     })
+    //filtre pour retirer les object vides
     splited.filter(obj => !(obj && Object.keys(obj).length === 0))
+    //test pour savoir si c'est une question ou une famille et ajout dans la bonne liste
     splited.forEach((item) => {
       if(item[0].charAt(0) == '$'){
         item[0] = item[0].substring(1)
@@ -55,3 +62,17 @@ importCSV()
 http.listen(PORT, () =>
   console.log(`Express server is running on localhost:${PORT}`)
 );
+
+io.on('connection', socket =>{
+  console.log(`client ${socket.id} connected`)
+
+  socket.on('GREET', (data) =>{
+    console.log(data.data)
+    socket.emit('GREET', {data:"Bonjour socket"}) 
+  })
+
+
+  socket.on('disconnect',() => {
+    console.log(`client ${socket.id} disconnected`)
+  })
+})
