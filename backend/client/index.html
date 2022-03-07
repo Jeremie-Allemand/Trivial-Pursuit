@@ -3,21 +3,33 @@
         <title>Client</title>
     </head>
     <body>
-        <div id="nologin">
+        <div id="login">
             <label for="username">Nom d'utilisateur</label><br>
             <input type="text" id="username" name="username" value=""><br>
             <input type="button" value="Connexion" onclick="login()">
         </div>
 
-        <div id="answer" style="display:none;">
-            <button onclick="answer(0)">0</button>
-            <button onclick="answer(1)">1</button>
-            <button onclick="answer(2)">2</button>
-            <button onclick="answer(3)">3</button>
+        <div id="wait_for_start" style="display:none;">
+           <h1>Patientez</h1>
+           <button onclick="gameStart()">START</button> 
+        </div>
+
+        <div id="question" style="display:none;">
+            <h1 id="question_text">Question</h1>
+            <ul>
+                <li id="answer_1">A</li>
+                <li id="answer_2">B</li>
+                <li id="answer_3">C</li>
+                <li id="answer_4">D</li>
+            </ul>
+            <button onclick="answer(0)">A</button>
+            <button onclick="answer(1)">B</button>
+            <button onclick="answer(2)">C</button>
+            <button onclick="answer(3)">D</button>
         </div>
 
         <div id="wait" style="display:none;">
-           <h1>Patientez</h1> 
+           <h1>Patientez</h1>
         </div>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js" integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -27,7 +39,13 @@
             const socket = io(server)
             
             socket.on('GAMESTART' ,() => {
-                document.getElementById("answer").style.display = "block"
+                document.getElementById("wait_for_start").style.display = "none"
+                document.getElementById("question").style.display = "block"
+            })
+
+            socket.on('QUESTION' , (data) =>{
+                console.log(data)
+                document.getElementById("question_text").innerHTML = data[1]
             })
 
             function login() {
@@ -38,8 +56,8 @@
                     if(result.data.login === "OK"){
                         //on cache la div de login puis on montre la div d'attente
                         console.log("OK")
-                        document.getElementById("nologin").style.display = "none"
-                        document.getElementById("wait").style.display = "block"
+                        document.getElementById("login").style.display = "none"
+                        document.getElementById("wait_for_start").style.display = "block"
                     }
                     else{
                         //on fait une alert
@@ -54,8 +72,15 @@
             function answer(option){
                 console.log(option)
                 document.getElementById("wait").style.display = "block"
-                document.getElementById("answer").style.display = "none"
+                document.getElementById("question").style.display = "none"
                 socket.emit('ANSWER', option)
+            }
+
+            function gameStart(){
+                document.getElementById("wait_for_start").style.display = "none"
+                document.getElementById("question").style.display = "block"
+                socket.emit('GAMESTART', "")
+                socket.emit('QUESTION', "")
             }
 
         </script>

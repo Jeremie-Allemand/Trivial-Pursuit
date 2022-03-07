@@ -1,6 +1,6 @@
 const cors = require('cors')
-const express = require('express');
-const { createSocket } = require('dgram');
+const express = require('express')
+const { createSocket } = require('dgram')
 const app = express();
 const http = require('http').Server(app)
 const io = require('socket.io')(http,{
@@ -17,6 +17,7 @@ app.use(cors())
 global.players = []
 global.familles = []
 global.questions = []
+global.question_no = 0
 global.link = __dirname + "/client"
 global.socket_io = io
 
@@ -67,10 +68,20 @@ io.on('connection', socket =>{
   console.log(`client ${socket.id} connected`)
 
   //Event de réponse au question
+  socket.on('GAMESTART', (data) =>{
+    console.log(data)
+    io.sockets.emit('GAMESTART', "")
+  })
+
+  socket.on('QUESTION', (data) => {
+    console.log("QUESTION")
+    io.sockets.emit('QUESTION',global.questions[global.question_no])
+    console.log(global.question_no)
+  })
+
   socket.on('ANSWER', (data) =>{
     console.log(data)
   })
-
 
   socket.on('disconnect',() => {
     console.log(`client ${socket.id} disconnected`)
