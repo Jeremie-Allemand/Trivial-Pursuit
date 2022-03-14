@@ -67,23 +67,23 @@ http.listen(PORT, () =>
 io.on('connection', socket =>{
   console.log(`client ${socket.id} connected`)
 
-  //Event de réponse au question
   socket.on('GAMESTART', (data) =>{
     console.log(data)
     io.sockets.emit('GAMESTART', "")
   })
 
   socket.on('QUESTION', (data) => {
-    console.log("QUESTION")
-    io.sockets.emit('QUESTION',global.questions[global.question_no])
-    console.log(global.question_no)
+    io.sockets.emit('QUESTION',global.questions[global.question_no]) //envoie de la question
+    console.log("Question : " + global.question_no)
   })
 
+  //Event de réponse au question
   socket.on('ANSWER', (data) =>{
     console.log(data)
   })
 
   socket.on('disconnect',() => {
     console.log(`client ${socket.id} disconnected`)
+    global.players.find()
   })
 })

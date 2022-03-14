@@ -17,10 +17,10 @@
         <div id="question" style="display:none;">
             <h1 id="question_text">Question</h1>
             <ul>
-                <li id="answer_1">A</li>
-                <li id="answer_2">B</li>
-                <li id="answer_3">C</li>
-                <li id="answer_4">D</li>
+                <li id="answer_0">A</li>
+                <li id="answer_1">B</li>
+                <li id="answer_2">C</li>
+                <li id="answer_3">D</li>
             </ul>
             <button onclick="answer(0)">A</button>
             <button onclick="answer(1)">B</button>
@@ -35,22 +35,40 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js" integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.0/axios.js" integrity="sha512-MNW6IbpNuZZ2VH9ngFhzh6cUt8L/0rSVa60F8L22K1H72ro4Ki3M/816eSDLnhICu7vwH/+/yb8oB3BtBLhMsA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script>
-            server = "http://"+ window.location.hostname + ":3001"
-            const socket = io(server)
+            server = "http://"+ window.location.hostname + ":3001" //lien du serveur pour le socket ou les requêtes http
+            const socket = io(server) //mise en place de la connexion avec le serveur
+            var answers = [] // tableau où seront les réponses
+
+            //Fonction pour mélanger une liste
+            function shuffleArray(arr) {
+                arr.sort(() => Math.random() - 0.5);
+            }
             
+            //Event pour commencer la partie en montrant la question
             socket.on('GAMESTART' ,() => {
                 document.getElementById("wait_for_start").style.display = "none"
                 document.getElementById("question").style.display = "block"
             })
-
+            
+            //Event lorsque que les questions sont reçu
             socket.on('QUESTION' , (data) =>{
-                console.log(data)
-                document.getElementById("question_text").innerHTML = data[1]
+                question = data[0]
+                correct = data[2] 
+                answers = data.slice(2,6) //on sort les réponses pour les mélanger
+                shuffleArray(answers) //on mélange les réponses
+                console.log(answers)
+                //on affiche les différentes questions dans la liste à puce
+                document.getElementById("answer_0").innerHTML = "A : " + answers[0]
+                document.getElementById("answer_1").innerHTML = "B : " + answers[1]
+                document.getElementById("answer_2").innerHTML = "C : " + answers[2]
+                document.getElementById("answer_3").innerHTML = "D : " + answers[3]
+                //on affiche la question
+                document.getElementById("question_text").innerHTML = question
             })
 
             function login() {
                 const name = document.getElementById('username').value 
-                //requête http
+                //requête http post pour se connecter
                 axios.post(server+"/addplayer",{username:name, socket_id:socket.id})
                 .then(result => {
                     if(result.data.login === "OK"){
@@ -60,7 +78,7 @@
                         document.getElementById("wait_for_start").style.display = "block"
                     }
                     else{
-                        //on fait une alert
+                        //on fait une alert si la connection s'est mal passé
                         console.log("KO " + result.data.login)
                     }
                 })
@@ -69,11 +87,13 @@
                 })
             }
 
+            //fonction qui est invoqué lors d'une réponse d'un joueur
             function answer(option){
                 console.log(option)
                 document.getElementById("wait").style.display = "block"
                 document.getElementById("question").style.display = "none"
-                socket.emit('ANSWER', option)
+                //on envoie une réponse au serveur 
+                socket.emit('ANSWER', answers[option])
             }
 
             function gameStart(){
