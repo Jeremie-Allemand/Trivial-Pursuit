@@ -52,7 +52,7 @@
             
             //Event lorsque que les questions sont reçu
             socket.on('QUESTION' , (data) =>{
-                question = data[0]
+                question = data[1]
                 correct = data[2] 
                 answers = data.slice(2,6) //on sort les réponses pour les mélanger
                 shuffleArray(answers) //on mélange les réponses

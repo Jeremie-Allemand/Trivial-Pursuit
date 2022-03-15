@@ -84,6 +84,5 @@ io.on('connection', socket =>{
 
   socket.on('disconnect',() => {
     console.log(`client ${socket.id} disconnected`)
-    global.players.find()
   })
 })
