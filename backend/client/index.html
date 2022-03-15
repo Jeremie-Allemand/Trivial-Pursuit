@@ -43,26 +43,23 @@
             function shuffleArray(arr) {
                 arr.sort(() => Math.random() - 0.5);
             }
-            
-            //Event pour commencer la partie en montrant la question
-            socket.on('GAMESTART' ,() => {
-                document.getElementById("wait_for_start").style.display = "none"
-                document.getElementById("question").style.display = "block"
-            })
-            
+
             //Event lorsque que les questions sont reçu
             socket.on('QUESTION' , (data) =>{
+                document.getElementById("wait_for_start").style.display = "none"
+                document.getElementById("wait").style.display = "none"
+                document.getElementById("question").style.display = "block"
+
                 question = data[1]
                 correct = data[2] 
                 answers = data.slice(2,6) //on sort les réponses pour les mélanger
                 shuffleArray(answers) //on mélange les réponses
                 console.log(answers)
-                //on affiche les différentes questions dans la liste à puce
+
                 document.getElementById("answer_0").innerHTML = "A : " + answers[0]
                 document.getElementById("answer_1").innerHTML = "B : " + answers[1]
                 document.getElementById("answer_2").innerHTML = "C : " + answers[2]
                 document.getElementById("answer_3").innerHTML = "D : " + answers[3]
-                //on affiche la question
                 document.getElementById("question_text").innerHTML = question
             })
 
@@ -99,8 +96,7 @@
             function gameStart(){
                 document.getElementById("wait_for_start").style.display = "none"
                 document.getElementById("question").style.display = "block"
-                socket.emit('GAMESTART', "")
-                socket.emit('QUESTION', "")
+                socket.emit('GAMESTART', "") //on commence la partie pour soi et les autres
             }
 
         </script>

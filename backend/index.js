@@ -9,14 +9,16 @@ const io = require('socket.io')(http,{
     methods: ["GET","POST","PUT","DELETE"]
   }
 })
-
+const timer = ms => new Promise( res => setTimeout(res, ms));
 const PORT = process.env.PORT || 3001
 app.use(express.json());
 app.use(cors())
 //variable et listes globales
+global.playing = true
 global.players = []
-global.familles = []
+global.famillies = []
 global.questions = []
+global.player_no = 0
 global.question_no = 0
 global.link = __dirname + "/client"
 global.socket_io = io
@@ -52,13 +54,33 @@ const importCSV = () => {
       }
       if(item[0].charAt(0) == '#'){
         item[0] = item[0].substring(1)
-        global.familles.push(item)
+        global.famillies.push(item)
       }
     })
   })
 }
 
 importCSV()
+
+function shuffleArray(arr) {
+    arr.sort(() => Math.random() - 0.5);
+}
+
+function famillyRequest(){
+  shuffleArray(global.famillies)
+  data = [global.famillies[0],global.famillies[1]]
+  io.to(global.players[global.player_no].socket_id).emit('FAMILLY',data)
+  timer(10000).then(_=>questionSend());
+}
+
+function questionSend(){
+  if(global.playing){
+    io.sockets.emit('QUESTION',global.questions[global.question_no]) //envoie de la question
+    // console.log("Question : " + global.question_no)
+    timer(10000).then(_=>famillyRequest());
+  }
+}
+
 
 http.listen(PORT, () =>
   console.log(`Express server is running on localhost:${PORT}`)
@@ -69,17 +91,15 @@ io.on('connection', socket =>{
 
   socket.on('GAMESTART', (data) =>{
     console.log(data)
-    io.sockets.emit('GAMESTART', "")
-  })
-
-  socket.on('QUESTION', (data) => {
-    io.sockets.emit('QUESTION',global.questions[global.question_no]) //envoie de la question
-    console.log("Question : " + global.question_no)
+    famillyRequest()
   })
 
   //Event de réponse au question
   socket.on('ANSWER', (data) =>{
-    console.log(data)
+    const index = global.players.findIndex(p =>p.socket_id === socket.id)
+    points = Number(global.questions[global.question_no][6])
+    global.players[index].score += points
+    console.log(global.players)
   })
 
   socket.on('disconnect',() => {
