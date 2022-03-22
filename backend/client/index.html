@@ -6,30 +6,39 @@
         <div id="login">
             <label for="username">Nom d'utilisateur</label><br>
             <input type="text" id="username" name="username" value=""><br>
-            <input type="button" value="Connexion" onclick="login()">
-        </div>
-
-        <div id="wait_for_start" style="display:none;">
-           <h1>Patientez</h1>
-           <button onclick="gameStart()">START</button> 
+            <button onclick="login()">Connexion</button>
         </div>
 
         <div id="question" style="display:none;">
             <h1 id="question_text">Question</h1>
             <ul>
-                <li id="answer_0">A</li>
-                <li id="answer_1">B</li>
-                <li id="answer_2">C</li>
-                <li id="answer_3">D</li>
+                <li id="answer_0"></li>
+                <li id="answer_1"></li>
+                <li id="answer_2"></li>
+                <li id="answer_3"></li>
             </ul>
             <button onclick="answer(0)">A</button>
             <button onclick="answer(1)">B</button>
             <button onclick="answer(2)">C</button>
             <button onclick="answer(3)">D</button>
+            <h1 id="timer"></h1>
         </div>
 
         <div id="wait" style="display:none;">
            <h1>Patientez</h1>
+        </div>
+
+        <div id="familly" style="display:none;">
+            <ul>
+                <li id="familly_0">A</li>
+                <li id="familly_1">B</li>
+            </ul>
+            <button onclick="chooseFamilly(0)">A</button>
+            <button onclick="chooseFamilly(1)">B</button>
+        </div>
+
+        <div id="end" style="display:none;">
+            <h1>END</h1>
         </div>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js" integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -38,33 +47,59 @@
             server = "http://"+ window.location.hostname + ":3001" //lien du serveur pour le socket ou les requêtes http
             const socket = io(server) //mise en place de la connexion avec le serveur
             var answers = [] // tableau où seront les réponses
+            var familly = []
 
-            //Fonction pour mélanger une liste
-            function shuffleArray(arr) {
-                arr.sort(() => Math.random() - 0.5);
-            }
-
-            //Event lorsque que les questions sont reçu
             socket.on('QUESTION' , (data) =>{
-                document.getElementById("wait_for_start").style.display = "none"
                 document.getElementById("wait").style.display = "none"
+                document.getElementById("familly").style.display = "none"
                 document.getElementById("question").style.display = "block"
 
-                question = data[1]
-                correct = data[2] 
-                answers = data.slice(2,6) //on sort les réponses pour les mélanger
+                question = data[0]
+                correct = data[1] 
+                answers = data.slice(1,5) //on sort les réponses pour les mélanger
                 shuffleArray(answers) //on mélange les réponses
                 console.log(answers)
 
+                document.getElementById("question_text").innerHTML = question
                 document.getElementById("answer_0").innerHTML = "A : " + answers[0]
                 document.getElementById("answer_1").innerHTML = "B : " + answers[1]
                 document.getElementById("answer_2").innerHTML = "C : " + answers[2]
                 document.getElementById("answer_3").innerHTML = "D : " + answers[3]
-                document.getElementById("question_text").innerHTML = question
             })
 
+            socket.on('FAMILLY', (data) => {
+                document.getElementById("question").style.display = "none"
+                document.getElementById("wait").style.display = "none"
+                document.getElementById("familly").style.display = "block"
+
+                familly = data
+
+                document.getElementById("familly_0").innerHTML = "A : " + data[0][1]
+                document.getElementById("familly_1").innerHTML = "B : " + data[1][1]
+            })
+
+            socket.on('WAIT', () => {
+                document.getElementById("question").style.display = "none"
+                document.getElementById("wait").style.display = "block"
+            })
+
+            socket.on('TIMER', (time) =>{
+                document.getElementById("timer").innerHTML = time
+            })
+
+            socket.on('GAME_END', () => {
+
+                document.getElementById("question").style.display = "none"
+                document.getElementById("wait").style.display = "none"
+                document.getElementById("end").style.display = "block"
+            })
+
+            function shuffleArray(arr) {
+                arr.sort(() => Math.random() - 0.5);
+            }
+
             function login() {
-                const name = document.getElementById('username').value 
+                const name = document.getElementById("username").value 
                 //requête http post pour se connecter
                 axios.post(server+"/addplayer",{username:name, socket_id:socket.id})
                 .then(result => {
@@ -72,7 +107,7 @@
                         //on cache la div de login puis on montre la div d'attente
                         console.log("OK")
                         document.getElementById("login").style.display = "none"
-                        document.getElementById("wait_for_start").style.display = "block"
+                        document.getElementById("wait").style.display = "block"
                     }
                     else{
                         //on fait une alert si la connection s'est mal passé
@@ -84,21 +119,18 @@
                 })
             }
 
-            //fonction qui est invoqué lors d'une réponse d'un joueur
             function answer(option){
                 console.log(option)
                 document.getElementById("wait").style.display = "block"
                 document.getElementById("question").style.display = "none"
-                //on envoie une réponse au serveur 
                 socket.emit('ANSWER', answers[option])
             }
 
-            function gameStart(){
-                document.getElementById("wait_for_start").style.display = "none"
-                document.getElementById("question").style.display = "block"
-                socket.emit('GAMESTART', "") //on commence la partie pour soi et les autres
+            function chooseFamilly(option){
+                data = familly[option][0]
+                socket.emit('FAMILLY_ANSWER', data)
+                console.log(data)
             }
-
         </script>
     </body>
 </html>

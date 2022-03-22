@@ -1,6 +1,7 @@
 const cors = require('cors')
 const express = require('express')
-const { createSocket } = require('dgram')
+const { createSocket } = require('dgram');
+const { clearTimeout } = require('timers');
 const app = express();
 const http = require('http').Server(app)
 const io = require('socket.io')(http,{
@@ -14,16 +15,22 @@ const PORT = process.env.PORT || 3001
 app.use(express.json());
 app.use(cors())
 //variable et listes globales
-global.playing = true
+global.playing = false
 global.players = []
-global.famillies = []
-global.questions = []
 global.player_no = 0
-global.question_no = 0
+global.playersWhoAnswered = 0
+global.famillies = []
+
+global.questions_restantes 
+global.questions = []
+global.questions_positions = []
+
 global.link = __dirname + "/client"
 global.socket_io = io
+var currentQuestion
+var questionTimeout
+var secondTimeout
 
-//Route pour les requêtes http
 require('./routes/game.route')(app)
 require('./routes/player.route')(app)
 
@@ -31,7 +38,7 @@ require('./routes/player.route')(app)
 const importCSV = () => {
   const fs = require('fs')
   //Lecture du fichier csv
-  fs.readFile('questions.csv', 'utf-8' , (err, file) => {
+  fs.readFile('../questions.csv', 'utf-8' , (err, file) => {
     //return s'il y a une erreur
     if (err) {
       console.error(err)
@@ -50,13 +57,27 @@ const importCSV = () => {
     splited.forEach((item) => {
       if(item[0].charAt(0) == '$'){
         item[0] = item[0].substring(1)
-        global.questions.push(item)
+        familly = item.shift()
+
+        if (typeof global.questions[familly] === 'undefined' || !Array.isArray(global.questions[familly])) {
+          global.questions[familly] = [];
+        }
+
+        global.questions[familly].push(item)
       }
+
       if(item[0].charAt(0) == '#'){
         item[0] = item[0].substring(1)
+        item = item.slice(0,2)
         global.famillies.push(item)
+        global.questions_positions[item[0]] = 0
       }
     })
+
+    global.famillies.forEach((familly) => {
+      shuffleArray(global.questions[familly[0]])
+    })
+
   })
 }
 
@@ -67,20 +88,46 @@ function shuffleArray(arr) {
 }
 
 function famillyRequest(){
-  shuffleArray(global.famillies)
-  data = [global.famillies[0],global.famillies[1]]
-  io.to(global.players[global.player_no].socket_id).emit('FAMILLY',data)
-  timer(10000).then(_=>questionSend());
+  if(global.playing && global.questions_restantes > 0){
+    global.player_no++
+    global.questions_restantes--
+    if(global.player_no === global.players.length)
+      global.player_no = 0
+    
+    shuffleArray(global.famillies)
+    data = [global.famillies[0],global.famillies[1]]
+    console.log(data)
+    io.sockets.emit('WAIT')
+    console.log(global.players[global.player_no])
+    io.to(global.players[global.player_no].socket_id).emit('FAMILLY',data)
+  }
+  else if(global.questions_restantes <= 0)
+    io.sockets.emit('GAME_END')
 }
 
-function questionSend(){
+function questionSend(familly){
+  questionTimer(10)
   if(global.playing){
-    io.sockets.emit('QUESTION',global.questions[global.question_no]) //envoie de la question
-    // console.log("Question : " + global.question_no)
-    timer(10000).then(_=>famillyRequest());
+    currentQuestion = global.questions[familly][global.questions_positions[familly]]
+    global.questions_positions[familly]++
+    if(global.questions_positions[familly] === global.questions[familly].length)
+      global.questions_positions[familly] = 0
+    io.sockets.emit('QUESTION',currentQuestion) //envoie de la question
+    questionTimeout = timer(10 * 1000).then(_=>famillyRequest());
   }
 }
 
+function everyoneAnswered(){
+  clearTimeout(questionTimeout)
+  clearTimeout(secondTimeout)
+  famillyRequest()
+}
+
+function questionTimer(time){
+  io.sockets.emit('TIMER',time)
+  if(time > 0)
+    secondTimeout = timer(1000).then(_=>questionTimer(time-1)) 
+}
 
 http.listen(PORT, () =>
   console.log(`Express server is running on localhost:${PORT}`)
@@ -89,17 +136,35 @@ http.listen(PORT, () =>
 io.on('connection', socket =>{
   console.log(`client ${socket.id} connected`)
 
-  socket.on('GAMESTART', (data) =>{
-    console.log(data)
-    famillyRequest()
+  socket.on('GAME_START', (questions_restantes) =>{
+    if(!global.playing){
+      global.questions_restantes = questions_restantes
+      global.playing = true
+      io.sockets.emit('SCORE_UPDATE',global.players)
+      famillyRequest()
+    }
   })
 
-  //Event de réponse au question
+  socket.on('FAMILLY_ANSWER',(data) =>{
+    console.log(data)
+    questionSend(data)
+  })
+
   socket.on('ANSWER', (data) =>{
-    const index = global.players.findIndex(p =>p.socket_id === socket.id)
-    points = Number(global.questions[global.question_no][6])
-    global.players[index].score += points
-    console.log(global.players)
+    global.playersWhoAnswered++
+
+    let index = global.players.findIndex(p =>p.socket_id === socket.id)
+    points = Number(currentQuestion[5])
+    var multiplicator = 1
+
+    if(index === global.player_no)
+      multiplicator = 2
+    if(data === currentQuestion[1])
+      global.players[index].score += points * multiplicator
+    
+    io.sockets.emit('SCORE_UPDATE', global.players)
+    if(global.playersWhoAnswered === global.players.length)
+      everyoneAnswered()
   })
 
   socket.on('disconnect',() => {

@@ -4,30 +4,36 @@
         <title>Admin</title>
     </head>
     <body>
+        <div id="game_start">
+            <label for="number_of_questions">Nombre de questions</label><br>
+            <input type="number" id="number_of_questions" name="number_of_questions" value=""><br>
+            <button onclick="start()">Start</button>
+        </div>
+        
+        <div id="score">
+        </div>
+
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js" integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.0/axios.js" integrity="sha512-MNW6IbpNuZZ2VH9ngFhzh6cUt8L/0rSVa60F8L22K1H72ro4Ki3M/816eSDLnhICu7vwH/+/yb8oB3BtBLhMsA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script>
             server = "http://"+ window.location.hostname + ":3001"
-            
+            const socket = io(server)
+
+            socket.on('SCORE_UPDATE', (data) => {
+                console.log(data)
+                var div = document.createElement("div")
+                data.forEach(user => {
+                    console.log(user)
+                    div.append(user.username + " : " + user.score)
+                    div.append(document.createElement("br"))
+                });
+                document.getElementById("score").innerHTML = div.innerHTML
+            })
+
             function start() {
-                const name = document.getElementById('username').value 
-                //requête http
-                axios.post(server+"/start",{username:name, socket_id:socket.id})
-                .then(result => {
-                    if(result.data.login === "OK"){
-                        //on cache la div de login puis on montre la div d'attente
-                        console.log("OK")
-                        document.getElementById("nologin").style.display = "none"
-                        document.getElementById("wait").style.display = "block"
-                    }
-                    else{
-                        //on fait une alert
-                        console.log("KO " + result.data.login)
-                    }
-                })
-                .catch((err) => {
-                    console.log(err.message)
-                })
+                document.getElementById("game_start").style.display = "none"
+                const numberOfQuestions = Number(document.getElementById("number_of_questions").value)
+                socket.emit('GAME_START',numberOfQuestions)
             }
         </script>
     </body>
