@@ -3,6 +3,7 @@ const express = require('express')
 const { createSocket } = require('dgram');
 const { clearTimeout } = require('timers');
 const app = express();
+var ip = require("ip")
 const http = require('http').Server(app)
 const io = require('socket.io')(http,{
   cors: {
@@ -10,7 +11,6 @@ const io = require('socket.io')(http,{
     methods: ["GET","POST","PUT","DELETE"]
   }
 })
-const timer = (ms) => new Promise( res => setTimeout(res, ms));
 
 const PORT = process.env.PORT || 3001
 app.use(express.json());
@@ -91,15 +91,17 @@ function famillyRequest(){
   global.playersWhoAnswered = 0
 
   if(global.playing && global.questions_restantes > 0){
-    global.player_no++
-    global.questions_restantes--
-    if(global.player_no === global.players.length)
-      global.player_no = 0
     
     shuffleArray(global.famillies)
-    data = [global.famillies[0],global.famillies[1]]
+    famillies = [global.famillies[0],global.famillies[1]]
     io.sockets.emit('WAIT')
-    io.to(global.players[global.player_no].socket_id).emit('FAMILLY',data)
+    io.to(global.players[global.player_no].socket_id).emit('FAMILLY',famillies)
+
+    global.player_no++
+    global.questions_restantes--
+    if(global.player_no === global.players.length){
+      global.player_no = 0
+    }
   }
   else if(global.questions_restantes <= 0)
     io.sockets.emit('GAME_END')
@@ -110,17 +112,17 @@ function questionSend(familly){
   if(global.playing){
     currentQuestion = global.questions[familly][global.questions_positions[familly]]
     global.questions_positions[familly]++
-    if(global.questions_positions[familly] === global.questions[familly].length)
+
+    if(global.questions_positions[familly] === global.questions[familly].length){
       global.questions_positions[familly] = 0
-    io.sockets.emit('QUESTION',currentQuestion) //envoie de la question
+      global.famillies.forEach((familly) => {
+        shuffleArray(global.questions[familly[0]])
+      })
+    }
+
+    io.sockets.emit('QUESTION',currentQuestion)
     questionTimeout = setTimeout(() => showCorrectAnswer(),10 * 1000)
   }
-}
-
-function everyoneAnswered(){
-  clearTimeout(questionTimeout)
-  clearTimeout(secondTimeout)
-  showCorrectAnswer()
 }
 
 function questionTimer(time){
@@ -129,20 +131,26 @@ function questionTimer(time){
     secondTimeout = setTimeout(() => questionTimer(time-1),1000)
 }
 
+function everyoneAnswered(){
+  clearTimeout(questionTimeout)
+  clearTimeout(secondTimeout)
+  showCorrectAnswer()
+}
+
 function showCorrectAnswer(){
-  io.sockets.emit('CORRECT_ANSWER')
+  io.sockets.emit('CORRECT_ANSWER', currentQuestion[1])
   correctTimeout = setTimeout(() => famillyRequest(),5 * 1000)
 }
 
-http.listen(PORT, () =>
+http.listen(PORT, () => {
   console.log(`Express server is running on localhost:${PORT}`)
-);
+});
 
 io.on('connection', socket =>{
   console.log(`client ${socket.id} connected`)
 
   socket.on('GAME_START', (questions_restantes) =>{
-    if(!global.playing){
+    if(!global.playing && global.players.length > 1){
       global.questions_restantes = questions_restantes
       global.playing = true
       io.sockets.emit('SCORE_UPDATE',global.players)
@@ -150,9 +158,7 @@ io.on('connection', socket =>{
     }
   })
 
-  socket.on('FAMILLY_ANSWER',(data) =>{
-    questionSend(data)
-  })
+  socket.on('FAMILLY_ANSWER',(data) => questionSend(data))
 
   socket.on('ANSWER', (data) =>{
     global.playersWhoAnswered++
@@ -173,7 +179,8 @@ io.on('connection', socket =>{
 
   socket.on('disconnect',() => {
     let index = global.players.findIndex(p =>p.socket_id === socket.id)
-    global.players.splice(index,1)
+    if(index)
+      global.players.splice(index,1)
     console.log(`client ${socket.id} disconnected`)
   })
 })

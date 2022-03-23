@@ -49,11 +49,10 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js" integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.0/axios.js" integrity="sha512-MNW6IbpNuZZ2VH9ngFhzh6cUt8L/0rSVa60F8L22K1H72ro4Ki3M/816eSDLnhICu7vwH/+/yb8oB3BtBLhMsA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script>
-            server = "http://"+ window.location.hostname + ":3001" //lien du serveur pour le socket ou les requêtes http
-            const socket = io(server) //mise en place de la connexion avec le serveur
-            var answers = [] // tableau où seront les réponses
+            server = "http://"+ window.location.hostname + ":3001"
+            const socket = io(server)
+            var answers = [] 
             var familly = []
-            var currentCorrect = ""
             var currentAnswer = ""
 
             socket.on('QUESTION' , (data) =>{
@@ -61,9 +60,8 @@
                 document.getElementById("question").style.display = "block"
                 currentAnswer = ""
                 question = data[0]
-                currentCorrect = data[1] 
-                answers = data.slice(1,5) //on sort les réponses pour les mélanger
-                shuffleArray(answers) //on mélange les réponses
+                answers = data.slice(1,5) 
+                shuffleArray(answers) 
 
                 document.getElementById("question_text").innerHTML = question
                 document.getElementById("answer_0").innerHTML = "A : " + answers[0]
@@ -82,12 +80,11 @@
                 document.getElementById("familly_1").innerHTML = "B : " + data[1][1]
             })
 
-            socket.on('CORRECT_ANSWER', () =>{
+            socket.on('CORRECT_ANSWER', (correctAnswer) =>{
                 hideAll()
                 document.getElementById("correct").style.display = "block"
-                console.log(currentCorrect)
                 document.getElementById("player_answer").innerHTML = "Votre réponse : " + currentAnswer
-                document.getElementById("correct_answer").innerHTML = "La bonne réponse : " + currentCorrect
+                document.getElementById("correct_answer").innerHTML = "La bonne réponse : " + correctAnswer
             })
 
             socket.on('WAIT', () => {
@@ -114,14 +111,9 @@
                 axios.post(server+"/addplayer",{username:name, socket_id:socket.id})
                 .then(result => {
                     if(result.data.login === "OK"){
-                        //on cache la div de login puis on montre la div d'attente
                         console.log("OK")
-                        document.getElementById("login").style.display = "none"
+                        hideAll()
                         document.getElementById("wait").style.display = "block"
-                    }
-                    else{
-                        //on fait une alert si la connection s'est mal passé
-                        console.log("KO " + result.data.login)
                     }
                 })
                 .catch((err) => {

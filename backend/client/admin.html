@@ -8,6 +8,7 @@
             <label for="number_of_questions">Nombre de questions</label><br>
             <input type="number" id="number_of_questions" name="number_of_questions" value=""><br>
             <button onclick="start()">Start</button>
+            <div id="users"></div>
         </div>
         
         <div id="score">
@@ -19,19 +20,27 @@
             server = "http://"+ window.location.hostname + ":3001"
             const socket = io(server)
 
-            socket.on('SCORE_UPDATE', (data) => {
-                console.log(data)
+            socket.on('SCORE_UPDATE', (users) => {
+                document.getElementById("game_start").style.display = "none"
+                document.getElementById("score").style.display = "block"
                 var div = document.createElement("div")
-                data.forEach(user => {
-                    console.log(user)
+                users.forEach(user => {
                     div.append("Nom : " +  user.username + " Score : " + user.score + " Camemberts : " + ((user.score / 1000) | 0) )
                     div.append(document.createElement("br"))
                 });
                 document.getElementById("score").innerHTML = div.innerHTML
             })
 
+            socket.on('LOGIN', (users) => {
+                var div = document.createElement("div")
+                users.forEach(user => {
+                    div.append(user.username)
+                    div.append(document.createElement("br"))
+                });
+                document.getElementById("users").innerHTML = div.innerHTML
+            })
+
             function start() {
-                document.getElementById("game_start").style.display = "none"
                 const numberOfQuestions = Number(document.getElementById("number_of_questions").value)
                 socket.emit('GAME_START',numberOfQuestions)
             }
