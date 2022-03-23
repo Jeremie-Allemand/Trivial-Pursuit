@@ -10,7 +10,8 @@ const io = require('socket.io')(http,{
     methods: ["GET","POST","PUT","DELETE"]
   }
 })
-const timer = ms => new Promise( res => setTimeout(res, ms));
+const timer = (ms) => new Promise( res => setTimeout(res, ms));
+
 const PORT = process.env.PORT || 3001
 app.use(express.json());
 app.use(cors())
@@ -33,9 +34,9 @@ var secondTimeout
 
 require('./routes/game.route')(app)
 require('./routes/player.route')(app)
+importCSV()
 
-///Fonction pour importer les CSV
-const importCSV = () => {
+function importCSV(){
   const fs = require('fs')
   //Lecture du fichier csv
   fs.readFile('../questions.csv', 'utf-8' , (err, file) => {
@@ -81,13 +82,14 @@ const importCSV = () => {
   })
 }
 
-importCSV()
-
 function shuffleArray(arr) {
     arr.sort(() => Math.random() - 0.5);
 }
 
 function famillyRequest(){
+
+  global.playersWhoAnswered = 0
+
   if(global.playing && global.questions_restantes > 0){
     global.player_no++
     global.questions_restantes--
@@ -96,9 +98,7 @@ function famillyRequest(){
     
     shuffleArray(global.famillies)
     data = [global.famillies[0],global.famillies[1]]
-    console.log(data)
     io.sockets.emit('WAIT')
-    console.log(global.players[global.player_no])
     io.to(global.players[global.player_no].socket_id).emit('FAMILLY',data)
   }
   else if(global.questions_restantes <= 0)
@@ -113,20 +113,25 @@ function questionSend(familly){
     if(global.questions_positions[familly] === global.questions[familly].length)
       global.questions_positions[familly] = 0
     io.sockets.emit('QUESTION',currentQuestion) //envoie de la question
-    questionTimeout = timer(10 * 1000).then(_=>famillyRequest());
+    questionTimeout = setTimeout(() => showCorrectAnswer(),10 * 1000)
   }
 }
 
 function everyoneAnswered(){
   clearTimeout(questionTimeout)
   clearTimeout(secondTimeout)
-  famillyRequest()
+  showCorrectAnswer()
 }
 
 function questionTimer(time){
   io.sockets.emit('TIMER',time)
   if(time > 0)
-    secondTimeout = timer(1000).then(_=>questionTimer(time-1)) 
+    secondTimeout = setTimeout(() => questionTimer(time-1),1000)
+}
+
+function showCorrectAnswer(){
+  io.sockets.emit('CORRECT_ANSWER')
+  correctTimeout = setTimeout(() => famillyRequest(),5 * 1000)
 }
 
 http.listen(PORT, () =>
@@ -146,7 +151,6 @@ io.on('connection', socket =>{
   })
 
   socket.on('FAMILLY_ANSWER',(data) =>{
-    console.log(data)
     questionSend(data)
   })
 
@@ -168,6 +172,8 @@ io.on('connection', socket =>{
   })
 
   socket.on('disconnect',() => {
+    let index = global.players.findIndex(p =>p.socket_id === socket.id)
+    global.players.splice(index,1)
     console.log(`client ${socket.id} disconnected`)
   })
 })

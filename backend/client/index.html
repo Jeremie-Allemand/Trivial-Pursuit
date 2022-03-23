@@ -8,6 +8,15 @@
             <input type="text" id="username" name="username" value=""><br>
             <button onclick="login()">Connexion</button>
         </div>
+        
+        <div id="familly" style="display:none;">
+            <ul>
+                <li id="familly_0">A</li>
+                <li id="familly_1">B</li>
+            </ul>
+            <button onclick="chooseFamilly(0)">A</button>
+            <button onclick="chooseFamilly(1)">B</button>
+        </div>
 
         <div id="question" style="display:none;">
             <h1 id="question_text">Question</h1>
@@ -28,15 +37,11 @@
            <h1>Patientez</h1>
         </div>
 
-        <div id="familly" style="display:none;">
-            <ul>
-                <li id="familly_0">A</li>
-                <li id="familly_1">B</li>
-            </ul>
-            <button onclick="chooseFamilly(0)">A</button>
-            <button onclick="chooseFamilly(1)">B</button>
+        <div id="correct" style="display: none;">
+            <div id="player_answer"></div>
+            <div id="correct_answer"></div>
         </div>
-
+        
         <div id="end" style="display:none;">
             <h1>END</h1>
         </div>
@@ -48,17 +53,17 @@
             const socket = io(server) //mise en place de la connexion avec le serveur
             var answers = [] // tableau où seront les réponses
             var familly = []
+            var currentCorrect = ""
+            var currentAnswer = ""
 
             socket.on('QUESTION' , (data) =>{
-                document.getElementById("wait").style.display = "none"
-                document.getElementById("familly").style.display = "none"
+                hideAll()
                 document.getElementById("question").style.display = "block"
-
+                currentAnswer = ""
                 question = data[0]
-                correct = data[1] 
+                currentCorrect = data[1] 
                 answers = data.slice(1,5) //on sort les réponses pour les mélanger
                 shuffleArray(answers) //on mélange les réponses
-                console.log(answers)
 
                 document.getElementById("question_text").innerHTML = question
                 document.getElementById("answer_0").innerHTML = "A : " + answers[0]
@@ -68,8 +73,7 @@
             })
 
             socket.on('FAMILLY', (data) => {
-                document.getElementById("question").style.display = "none"
-                document.getElementById("wait").style.display = "none"
+                hideAll()
                 document.getElementById("familly").style.display = "block"
 
                 familly = data
@@ -78,8 +82,16 @@
                 document.getElementById("familly_1").innerHTML = "B : " + data[1][1]
             })
 
+            socket.on('CORRECT_ANSWER', () =>{
+                hideAll()
+                document.getElementById("correct").style.display = "block"
+                console.log(currentCorrect)
+                document.getElementById("player_answer").innerHTML = "Votre réponse : " + currentAnswer
+                document.getElementById("correct_answer").innerHTML = "La bonne réponse : " + currentCorrect
+            })
+
             socket.on('WAIT', () => {
-                document.getElementById("question").style.display = "none"
+                hideAll()
                 document.getElementById("wait").style.display = "block"
             })
 
@@ -88,9 +100,7 @@
             })
 
             socket.on('GAME_END', () => {
-
-                document.getElementById("question").style.display = "none"
-                document.getElementById("wait").style.display = "none"
+                hideAll()
                 document.getElementById("end").style.display = "block"
             })
 
@@ -123,13 +133,23 @@
                 console.log(option)
                 document.getElementById("wait").style.display = "block"
                 document.getElementById("question").style.display = "none"
-                socket.emit('ANSWER', answers[option])
+                currentAnswer = answers[option]
+                socket.emit('ANSWER', currentAnswer)
             }
 
             function chooseFamilly(option){
                 data = familly[option][0]
                 socket.emit('FAMILLY_ANSWER', data)
                 console.log(data)
+            }
+
+            function hideAll(){
+                document.getElementById("login").style.display = "none"
+                document.getElementById("familly").style.display = "none"
+                document.getElementById("question").style.display = "none"
+                document.getElementById("wait").style.display = "none"
+                document.getElementById("correct").style.display = "none"
+                // document.getElementById("end").style.display = "none"
             }
         </script>
     </body>

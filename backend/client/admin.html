@@ -24,7 +24,7 @@
                 var div = document.createElement("div")
                 data.forEach(user => {
                     console.log(user)
-                    div.append(user.username + " : " + user.score)
+                    div.append("Nom : " +  user.username + " Score : " + user.score + " Camemberts : " + ((user.score / 1000) | 0) )
                     div.append(document.createElement("br"))
                 });
                 document.getElementById("score").innerHTML = div.innerHTML

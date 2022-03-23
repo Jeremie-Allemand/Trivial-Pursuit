@@ -19,5 +19,10 @@
     "nodemon": "^2.0.15",
     "socket.io": "^4.4.1",
     "uuid": "^8.3.2"
+  },
+  "pkg" : {
+    "assets" : [
+      "client/*.html"
+    ]
   }
 }
