@@ -1,6 +1,5 @@
 const cors = require('cors')
 const express = require('express')
-const { createSocket } = require('dgram');
 const { clearTimeout } = require('timers');
 const app = express();
 var ip = require("ip")
@@ -22,19 +21,119 @@ global.player_no = 0
 global.playersWhoAnswered = 0
 global.famillies = []
 
-global.questions_restantes 
+global.remainingQuestions 
 global.questions = []
 global.questions_positions = []
 
 global.link = __dirname + "/client"
 global.socket_io = io
 var currentQuestion
-var questionTimeout
-var secondTimeout
+var timerTimeout
+
+app.use('/user', function(req,res){
+  res.sendFile(global.link + '/index.html')
+})
+app.use('/admin', function(req,res){
+  res.sendFile(global.link + '/admin.html')
+})
 
 require('./routes/game.route')(app)
-require('./routes/player.route')(app)
 importCSV()
+
+function onGameStart(remainingQuestions){
+  if(!global.playing && global.players.length > 1){
+    global.remainingQuestions = remainingQuestions
+    global.playing = true
+    io.sockets.emit('SCORE_UPDATE',global.players)
+    turnStart()
+  }
+}
+
+function onFamilyAnswer(familly){
+  questionSend(familly)
+}
+
+function onAnswer(answer, id){
+  global.playersWhoAnswered++
+
+  let index = global.players.findIndex(p =>p.socket_id === id)
+  points = Number(currentQuestion[5])
+  var multiplicator = 1
+
+  if(index === global.player_no)
+    multiplicator = 2
+  if(answer === currentQuestion[1])
+    global.players[index].score += points * multiplicator
+  
+  io.sockets.emit('SCORE_UPDATE', global.players)
+  if(global.playersWhoAnswered === global.players.length)
+    everyoneAnswered()
+}
+
+function onDisconnect(id){
+  const index = global.players.findIndex(p =>p.socket_id === id)
+  if(index)
+    global.players.splice(index,1)
+  console.log(`client ${id} disconnected`)
+}
+function turnStart(){
+
+  global.playersWhoAnswered = 0
+
+  if(global.playing && global.remainingQuestions > 0){
+    global.player_no++
+    if(global.player_no === global.players.length){
+      global.player_no = 0
+    }
+    famillyRequest()
+    global.remainingQuestions--
+  }
+  else if(global.remainingQuestions <= 0)
+    io.sockets.emit('GAME_END')
+}
+
+function famillyRequest(){
+  shuffleArray(global.famillies)
+  famillies = [global.famillies[0],global.famillies[1]]
+  io.sockets.emit('WAIT')
+  io.to(global.players[global.player_no].socket_id).emit('FAMILLY',famillies)
+}
+
+function questionSend(familly){
+  questionTimer(10)
+  if(global.playing){
+    currentQuestion = global.questions[familly][global.questions_positions[familly]]
+    global.questions_positions[familly]++
+
+    if(global.questions_positions[familly] === global.questions[familly].length){
+      global.questions_positions[familly] = 0
+      global.famillies.forEach((familly) => {
+        shuffleArray(global.questions[familly[0]])
+      })
+    }
+
+    io.sockets.emit('QUESTION',currentQuestion)
+    // questionTimeout = setTimeout(() => showCorrectAnswer(),10 * 1000)
+  }
+}
+
+function questionTimer(time){
+  io.sockets.emit('TIMER',time)
+  if(time > 0)
+    timerTimeout = setTimeout(() => questionTimer(time-1),1000)
+  else if(time === 0)
+    showCorrectAnswer()
+}
+
+function everyoneAnswered(){
+  clearTimeout(timerTimeout)
+  showCorrectAnswer()
+}
+
+function showCorrectAnswer(){
+  io.sockets.emit('CORRECT_ANSWER', currentQuestion[1])
+  correctTimeout = setTimeout(() => turnStart(),5 * 1000)
+}
 
 function importCSV(){
   const fs = require('fs')
@@ -52,8 +151,6 @@ function importCSV(){
     rows.forEach((item) => {
       splited.push(item.split(';'))
     })
-    //filtre pour retirer les object vides
-    splited.filter(obj => !(obj && Object.keys(obj).length === 0))
     //test pour savoir si c'est une question ou une famille et ajout dans la bonne liste
     splited.forEach((item) => {
       if(item[0].charAt(0) == '$'){
@@ -86,101 +183,18 @@ function shuffleArray(arr) {
     arr.sort(() => Math.random() - 0.5);
 }
 
-function famillyRequest(){
+io.on('connection', socket =>{
+  console.log(`client ${socket.id} connected`)
+  
+  socket.on('GAME_START', (remainingQuestions) => onGameStart(remainingQuestions))
 
-  global.playersWhoAnswered = 0
+  socket.on('FAMILLY_ANSWER',(data) => onFamilyAnswer(data))
 
-  if(global.playing && global.questions_restantes > 0){
-    
-    shuffleArray(global.famillies)
-    famillies = [global.famillies[0],global.famillies[1]]
-    io.sockets.emit('WAIT')
-    io.to(global.players[global.player_no].socket_id).emit('FAMILLY',famillies)
+  socket.on('ANSWER', (answer) => onAnswer(answer, socket.id))
 
-    global.player_no++
-    global.questions_restantes--
-    if(global.player_no === global.players.length){
-      global.player_no = 0
-    }
-  }
-  else if(global.questions_restantes <= 0)
-    io.sockets.emit('GAME_END')
-}
-
-function questionSend(familly){
-  questionTimer(10)
-  if(global.playing){
-    currentQuestion = global.questions[familly][global.questions_positions[familly]]
-    global.questions_positions[familly]++
-
-    if(global.questions_positions[familly] === global.questions[familly].length){
-      global.questions_positions[familly] = 0
-      global.famillies.forEach((familly) => {
-        shuffleArray(global.questions[familly[0]])
-      })
-    }
-
-    io.sockets.emit('QUESTION',currentQuestion)
-    questionTimeout = setTimeout(() => showCorrectAnswer(),10 * 1000)
-  }
-}
-
-function questionTimer(time){
-  io.sockets.emit('TIMER',time)
-  if(time > 0)
-    secondTimeout = setTimeout(() => questionTimer(time-1),1000)
-}
-
-function everyoneAnswered(){
-  clearTimeout(questionTimeout)
-  clearTimeout(secondTimeout)
-  showCorrectAnswer()
-}
-
-function showCorrectAnswer(){
-  io.sockets.emit('CORRECT_ANSWER', currentQuestion[1])
-  correctTimeout = setTimeout(() => famillyRequest(),5 * 1000)
-}
+  socket.on('disconnect',() => onDisconnect(socket.id))
+})
 
 http.listen(PORT, () => {
   console.log(`Express server is running on localhost:${PORT}`)
 });
-
-io.on('connection', socket =>{
-  console.log(`client ${socket.id} connected`)
-
-  socket.on('GAME_START', (questions_restantes) =>{
-    if(!global.playing && global.players.length > 1){
-      global.questions_restantes = questions_restantes
-      global.playing = true
-      io.sockets.emit('SCORE_UPDATE',global.players)
-      famillyRequest()
-    }
-  })
-
-  socket.on('FAMILLY_ANSWER',(data) => questionSend(data))
-
-  socket.on('ANSWER', (data) =>{
-    global.playersWhoAnswered++
-
-    let index = global.players.findIndex(p =>p.socket_id === socket.id)
-    points = Number(currentQuestion[5])
-    var multiplicator = 1
-
-    if(index === global.player_no)
-      multiplicator = 2
-    if(data === currentQuestion[1])
-      global.players[index].score += points * multiplicator
-    
-    io.sockets.emit('SCORE_UPDATE', global.players)
-    if(global.playersWhoAnswered === global.players.length)
-      everyoneAnswered()
-  })
-
-  socket.on('disconnect',() => {
-    let index = global.players.findIndex(p =>p.socket_id === socket.id)
-    if(index)
-      global.players.splice(index,1)
-    console.log(`client ${socket.id} disconnected`)
-  })
-})

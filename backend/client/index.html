@@ -52,15 +52,27 @@
             server = "http://"+ window.location.hostname + ":3001"
             const socket = io(server)
             var answers = [] 
-            var familly = []
+            var famillies = []
             var currentAnswer = ""
 
-            socket.on('QUESTION' , (data) =>{
+            socket.on('QUESTION' , (questionData) => onQuestion(questionData))
+
+            socket.on('FAMILLY', (familliesData) => onFamilly(familliesData))
+
+            socket.on('CORRECT_ANSWER', (correctAnswer) => onCorrectAnswer(correctAnswer))
+
+            socket.on('WAIT', () => onWait())
+
+            socket.on('TIMER', (time) => onTimer(time))
+
+            socket.on('GAME_END', () => onGameEnd())
+
+            function onQuestion(questionData){
                 hideAll()
                 document.getElementById("question").style.display = "block"
                 currentAnswer = ""
-                question = data[0]
-                answers = data.slice(1,5) 
+                question = questionData[0]
+                answers = questionData.slice(1,5) 
                 shuffleArray(answers) 
 
                 document.getElementById("question_text").innerHTML = question
@@ -68,38 +80,38 @@
                 document.getElementById("answer_1").innerHTML = "B : " + answers[1]
                 document.getElementById("answer_2").innerHTML = "C : " + answers[2]
                 document.getElementById("answer_3").innerHTML = "D : " + answers[3]
-            })
+            }
 
-            socket.on('FAMILLY', (data) => {
+            function onFamilly(familliesData){
                 hideAll()
                 document.getElementById("familly").style.display = "block"
 
-                familly = data
+                famillies = familliesData
 
-                document.getElementById("familly_0").innerHTML = "A : " + data[0][1]
-                document.getElementById("familly_1").innerHTML = "B : " + data[1][1]
-            })
+                document.getElementById("familly_0").innerHTML = "A : " + famillies[0][1]
+                document.getElementById("familly_1").innerHTML = "B : " + famillies[1][1]
+            }
 
-            socket.on('CORRECT_ANSWER', (correctAnswer) =>{
+            function onCorrectAnswer(correctAnswer){
                 hideAll()
                 document.getElementById("correct").style.display = "block"
                 document.getElementById("player_answer").innerHTML = "Votre réponse : " + currentAnswer
                 document.getElementById("correct_answer").innerHTML = "La bonne réponse : " + correctAnswer
-            })
+            }
 
-            socket.on('WAIT', () => {
+            function onWait(){
                 hideAll()
                 document.getElementById("wait").style.display = "block"
-            })
+            }
 
-            socket.on('TIMER', (time) =>{
+            function onTimer(time){
                 document.getElementById("timer").innerHTML = time
-            })
+            }
 
-            socket.on('GAME_END', () => {
+            function onGameEnd(){
                 hideAll()
                 document.getElementById("end").style.display = "block"
-            })
+            }
 
             function shuffleArray(arr) {
                 arr.sort(() => Math.random() - 0.5);
@@ -130,9 +142,8 @@
             }
 
             function chooseFamilly(option){
-                data = familly[option][0]
+                data = famillies[option][0]
                 socket.emit('FAMILLY_ANSWER', data)
-                console.log(data)
             }
 
             function hideAll(){

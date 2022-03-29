@@ -20,7 +20,10 @@
             server = "http://"+ window.location.hostname + ":3001"
             const socket = io(server)
 
-            socket.on('SCORE_UPDATE', (users) => {
+            socket.on('SCORE_UPDATE', (users) => onScoreUpdate(users))
+            socket.on('LOGIN', (users) => onLogin(users))
+            
+            function onScoreUpdate(users){
                 document.getElementById("game_start").style.display = "none"
                 document.getElementById("score").style.display = "block"
                 var div = document.createElement("div")
@@ -29,16 +32,16 @@
                     div.append(document.createElement("br"))
                 });
                 document.getElementById("score").innerHTML = div.innerHTML
-            })
+            }
 
-            socket.on('LOGIN', (users) => {
+            function onLogin(users){
                 var div = document.createElement("div")
                 users.forEach(user => {
                     div.append(user.username)
                     div.append(document.createElement("br"))
                 });
                 document.getElementById("users").innerHTML = div.innerHTML
-            })
+            }
 
             function start() {
                 const numberOfQuestions = Number(document.getElementById("number_of_questions").value)
