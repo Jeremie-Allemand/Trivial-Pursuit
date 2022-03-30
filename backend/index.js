@@ -139,7 +139,7 @@ function showCorrectAnswer(){
 function importCSV(){
   const fs = require('fs')
   //Lecture du fichier csv
-  fs.readFile('../demo.csv', 'utf-8' , (err, file) => {
+  fs.readFile('../questions.csv', 'utf-8' , (err, file) => {
     //return s'il y a une erreur dans la lecture fichier
     if (err) {
       console.error(err)
