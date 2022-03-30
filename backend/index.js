@@ -139,12 +139,12 @@ function importCSV(){
   const fs = require('fs')
   //Lecture du fichier csv
   fs.readFile('../questions.csv', 'utf-8' , (err, file) => {
-    //return s'il y a une erreur
+    //return s'il y a une erreur dans la lecture fichier
     if (err) {
       console.error(err)
       return
     }
-    //séparation par line ligne
+    //séparation par ligne ligne
     const rows = file.toString().trim().split('\r\n')
     var splited = []
     //sépartation avec les ";"
@@ -153,17 +153,18 @@ function importCSV(){
     })
     //test pour savoir si c'est une question ou une famille et ajout dans la bonne liste
     splited.forEach((item) => {
+      //si c'est une famille
       if(item[0].charAt(0) == '$'){
         item[0] = item[0].substring(1)
         familly = item.shift()
-
+        //si la famille est créer, on fait une liste pour stocker les questions de celle-ci
         if (typeof global.questions[familly] === 'undefined' || !Array.isArray(global.questions[familly])) {
           global.questions[familly] = [];
         }
 
         global.questions[familly].push(item)
       }
-
+      //si c'est une question
       if(item[0].charAt(0) == '#'){
         item[0] = item[0].substring(1)
         item = item.slice(0,2)
