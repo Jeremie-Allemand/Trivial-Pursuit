@@ -1,48 +1,11 @@
-#fam1;F@amille de test 1;;;;;
-#fam2;F@amille de test 2;;;;;
-#fam3;F@amille de test 3;;;;;
-#fam4;F@amille de test 4;;;;;
-#fam5;F@amille de test 5;;;;;
-#fam6;F@amille de test 6;;;;;
-$fam1;Q@uestion test 1;a;b;c;d;100
-$fam1;Q@uestion test 2;a;b;c;d;100
-$fam1;Q@uestion test 3;a;b;c;d;100
-$fam1;Q@uestion test 4;a;b;c;d;100
-$fam1;Q@uestion test 5;a;b;c;d;100
-$fam1;Q@uestion test 6;a;b;c;d;100
-$fam1;Q@uestion test 7;a;b;c;d;100
-$fam2;Q@uestion test 1;a;b;c;d;100
-$fam2;Q@uestion test 2;a;b;c;d;100
-$fam2;Q@uestion test 3;a;b;c;d;100
-$fam2;Q@uestion test 4;a;b;c;d;100
-$fam2;Q@uestion test 5;a;b;c;d;100
-$fam2;Q@uestion test 6;a;b;c;d;100
-$fam2;Q@uestion test 7;a;b;c;d;100
-$fam3;Q@uestion test 1;a;b;c;d;100
-$fam3;Q@uestion test 2;a;b;c;d;100
-$fam3;Q@uestion test 3;a;b;c;d;100
-$fam3;Q@uestion test 4;a;b;c;d;100
-$fam3;Q@uestion test 5;a;b;c;d;100
-$fam3;Q@uestion test 6;a;b;c;d;100
-$fam3;Q@uestion test 7;a;b;c;d;100
-$fam4;Q@uestion test 1;a;b;c;d;100
-$fam4;Q@uestion test 2;a;b;c;d;100
-$fam4;Q@uestion test 3;a;b;c;d;100
-$fam4;Q@uestion test 4;a;b;c;d;100
-$fam4;Q@uestion test 5;a;b;c;d;100
-$fam4;Q@uestion test 6;a;b;c;d;100
-$fam4;Q@uestion test 7;a;b;c;d;100
-$fam5;Q@uestion test 1;a;b;c;d;100
-$fam5;Q@uestion test 2;a;b;c;d;100
-$fam5;Q@uestion test 3;a;b;c;d;100
-$fam5;Q@uestion test 4;a;b;c;d;100
-$fam5;Q@uestion test 5;a;b;c;d;100
-$fam5;Q@uestion test 6;a;b;c;d;100
-$fam5;Q@uestion test 7;a;b;c;d;100
-$fam6;Q@uestion test 1;a;b;c;d;100
-$fam6;Q@uestion test 2;a;b;c;d;100
-$fam6;Q@uestion test 3;a;b;c;d;100
-$fam6;Q@uestion test 4;a;b;c;d;100
-$fam6;Q@uestion test 5;a;b;c;d;100
-$fam6;Q@uestion test 6;a;b;c;d;100
-$fam6;Q@uestion test 7;a;b;c;d;100
+#plastiques;Les matières plastiques;;;;;
+#metauxnonfer;Les méteaux non ferreux;;;;;
+$plastiques;Les matières plastique font partie d'un classe de matériaux que l'on appel ?;Polymères;Polyester;Polyphores;Polypropylènes;100
+$plastiques;Les matières plastique sont classé dans ?;Les non-métaux;Les non-métaux;Les métaux;Les métaux;100
+$plastiques;De quelle famille appartient le sagex ?;Polystyrène (PS);Polychlorure (PVC);Polyéthylène (LDPE, HDPE);Phénoplastes (PF);100
+$metauxnonfer;Les métaux représentent combien de % des éléments chimiques ?;80%;30%;60%;10%;100
+$metauxnonfer;Pour la classification des métaux non ferreux, on évalue une propriété physique, laquelle ?;La masse volumique;La conductivité thermique;La tenacité;La résistance à la traction;100
+$metauxnonfer;Pour les métaux non-ferreux, on les groupe en deux familles par ?;Leurs poids;Leurs couleurs;Leurs facilité d'usinage;Leurs propriétés mécaniques;100
+$metauxnonfer;"Font partie des ""non ferreux"", les métaux à l'exception du fer et tous les alliages et dans lequel le fer est minoritaire, vrai ou faux ?";VRAI;FAUX;VRAI;FAUX;100
+$metauxnonfer;Les métaux légers les plus importants sont…;l'aluminium, l'acier et le titane ainsi que leurs différents alliages;l'aluminium, le magnésium et le titane ainsi que leurs différents alliages;l'aluminium, la fonte et l'acier ainsi que leurs différents alliages;l'aluminium, l'acier inox et le titane ainsi que leurs différents alliages;100
+$metauxnonfer;Les métaux légers ont une masse volumique inférieure à 3 kg/dm3, vrai ou faux ?;FAUX;VRAI;FAUX;VRAI;100
