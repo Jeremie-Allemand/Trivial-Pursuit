@@ -1,0 +1,76 @@
+
+<html>
+    <head>
+        <title>Admin</title>
+    </head>
+    <body>
+        <div id="game_start">
+            <label for="number_of_questions">Nombre de questions</label><br>
+            <input type="number" id="number_of_questions" name="number_of_questions" value=""><br>
+            <button onclick="start()">Start</button>
+            <div id="users"></div>
+        </div>
+        
+        <div id="score">
+        </div>
+        <div id="react"/>
+
+        <script type="text/babel">
+
+            function LoginScreen(){
+                return(
+                    <div id="login">
+                        <label for="username">Nom d'utilisateur</label>
+                        <input type="text" id="username" name="username" value="">
+                            <button onclick="login()">Connexion</button>
+                        </input>
+                    </div>
+                )
+            }
+
+            function AnswerButton(props){
+                return (
+                    <div onClick={() => answer(props.answer)} className="box">
+                        <p style={{"height":"auto"}} >{props.answer}</p>
+                    </div>
+                );
+            }
+
+            ReactDOM.render(<QuestionScreen />, document.getElementById('react'))
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js" integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.0/axios.js" integrity="sha512-MNW6IbpNuZZ2VH9ngFhzh6cUt8L/0rSVa60F8L22K1H72ro4Ki3M/816eSDLnhICu7vwH/+/yb8oB3BtBLhMsA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script>
+            server = "http://"+ window.location.hostname + ":3001"
+            const socket = io(server)
+
+            socket.on('SCORE_UPDATE', (users) => onScoreUpdate(users))
+            socket.on('LOGIN', (users) => onLogin(users))
+            
+            function onScoreUpdate(users){
+                document.getElementById("game_start").style.display = "none"
+                document.getElementById("score").style.display = "block"
+                var div = document.createElement("div")
+                users.forEach(user => {
+                    div.append("Nom : " +  user.username + " Score : " + user.score + " Camemberts : " + ((user.score / 1000) | 0) )
+                    div.append(document.createElement("br"))
+                });
+                document.getElementById("score").innerHTML = div.innerHTML
+            }
+
+            function onLogin(users){
+                var div = document.createElement("div")
+                users.forEach(user => {
+                    div.append(user.username)
+                    div.append(document.createElement("br"))
+                });
+                document.getElementById("users").innerHTML = div.innerHTML
+            }
+
+            function start() {
+                const numberOfQuestions = Number(document.getElementById("number_of_questions").value)
+                socket.emit('GAME_START',numberOfQuestions)
+            }
+        </script>
+    </body>
+</html>

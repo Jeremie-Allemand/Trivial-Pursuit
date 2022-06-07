@@ -1,0 +1,226 @@
+
+<html>
+    <head>
+        <title>React</title>
+    </head>
+    <body>
+        <div style="display: none;">
+            
+            <div id="familly" style="display:none;">
+                <ul>
+                    <li id="familly_0">A</li>
+                    <li id="familly_1">B</li>
+                </ul>
+                <button onclick="chooseFamilly(0)">A</button>
+                <button onclick="chooseFamilly(1)">B</button>
+            </div>
+
+            <div id="question" style="display:none;">
+                <h1 id="question_text">Question</h1>
+                <ul>
+                    <li id="answer_0"></li>
+                    <li id="answer_1"></li>
+                    <li id="answer_2"></li>
+                    <li id="answer_3"></li>
+                </ul>
+                <button onclick="answer(0)">A</button>
+                <button onclick="answer(1)">B</button>
+                <button onclick="answer(2)">C</button>
+                <button onclick="answer(3)">D</button>
+                <h1 id="timer"></h1>
+            </div>
+
+            <div id="wait" style="display:none;">
+            <h1>Patientez</h1>
+            </div>
+
+            <div id="correct" style="display: none;">
+                <div id="player_answer"></div>
+                <div id="correct_answer"></div>
+            </div>
+            
+            <div id="end" style="display:none;">
+                <h1>END</h1>
+            </div>
+        </div>
+        
+        <div id="react"/>
+
+        <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+        <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js" integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.0/axios.js" integrity="sha512-MNW6IbpNuZZ2VH9ngFhzh6cUt8L/0rSVa60F8L22K1H72ro4Ki3M/816eSDLnhICu7vwH/+/yb8oB3BtBLhMsA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+        <style>
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            margin: auto;
+            width: 50%;
+        }
+
+        .box {
+            background:#fee7e8; 
+            border-radius: 25px;
+            width:200px;
+            padding: 50px 0;
+            margin: 20px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        </style>
+        <script type="text/babel">
+
+            function LoginScreen(){
+                return(
+                    <div id="login">
+                        <label for="username">Nom d'utilisateur</label>
+                        <input type="text" id="username" name="username" value="">
+                            <button onclick="login()">Connexion</button>
+                        </input>
+                    </div>
+                )
+            }
+
+            function WaitScreen(){
+                return(
+                    <div>
+                        <h1>Patientez</h1>
+                    </div>
+                )
+            }
+
+            function QuestionScreen() {
+                return (
+                    <div>
+                        <h1>React</h1>
+                        <div className="containter">
+                            <AnswerButton answer="A"/>
+                            <AnswerButton answer="B"/>
+                            <AnswerButton answer="C"/>
+                            <AnswerButton answer="D"/>
+                        </div>
+                    </div>
+                );
+            }
+
+            function AnswerButton(props){
+                return (
+                    <div onClick={() => answer(props.answer)} className="box">
+                        <p style={{"height":"auto"}} >{props.answer}</p>
+                    </div>
+                );
+            }
+
+            ReactDOM.render(<LoginScreen />, document.getElementById('react'))
+        </script>
+
+        <script>
+            server = "http://"+ window.location.host
+            const socket = io(server)
+            var answers = [] 
+            var famillies = []
+            var currentAnswer = ""
+
+            socket.on('QUESTION' , (questionData) => onQuestion(questionData))
+
+            socket.on('FAMILLY', (familliesData) => onFamilly(familliesData))
+
+            socket.on('CORRECT_ANSWER', (correctAnswer) => onCorrectAnswer(correctAnswer))
+
+            socket.on('WAIT', () => onWait())
+
+            socket.on('TIMER', (time) => onTimer(time))
+
+            socket.on('GAME_END', () => onGameEnd())
+
+            function onQuestion(questionData){
+                hideAll()
+                document.getElementById("question").style.display = "block"
+                currentAnswer = ""
+                question = questionData[0]
+                answers = questionData.slice(1,5) 
+                shuffleArray(answers) 
+
+                document.getElementById("question_text").innerHTML = question
+                document.getElementById("answer_0").innerHTML = "A : " + answers[0]
+                document.getElementById("answer_1").innerHTML = "B : " + answers[1]
+                document.getElementById("answer_2").innerHTML = "C : " + answers[2]
+                document.getElementById("answer_3").innerHTML = "D : " + answers[3]
+            }
+
+            function onFamilly(familliesData){
+                hideAll()
+                document.getElementById("familly").style.display = "block"
+
+                famillies = familliesData
+
+                document.getElementById("familly_0").innerHTML = "A : " + famillies[0][1]
+                document.getElementById("familly_1").innerHTML = "B : " + famillies[1][1]
+            }
+
+            function onCorrectAnswer(correctAnswer){
+                hideAll()
+                document.getElementById("correct").style.display = "block"
+                document.getElementById("player_answer").innerHTML = "Votre réponse : " + currentAnswer
+                document.getElementById("correct_answer").innerHTML = "La bonne réponse : " + correctAnswer
+            }
+
+            function onWait(){
+                hideAll()
+                document.getElementById("wait").style.display = "block"
+            }
+
+            function onTimer(time){
+                document.getElementById("timer").innerHTML = time
+            }
+
+            function onGameEnd(){
+                hideAll()
+                document.getElementById("end").style.display = "block"
+            }
+
+            function shuffleArray(arr) {
+                arr.sort(() => Math.random() - 0.5);
+            }
+
+            function login() {
+                const name = document.getElementById("username").value 
+                axios.post(server+"/addplayer",{username:name, socket_id:socket.id})
+                .then(result => {
+                    if(result.data.login === "OK"){
+                        console.log("OK")
+                        hideAll()
+                        document.getElementById("wait").style.display = "block"
+                    }
+                })
+                .catch((err) => {
+                    console.log(err.message)
+                })
+            }
+
+            function answer(option){
+                console.log(option)
+                document.getElementById("wait").style.display = "block"
+                document.getElementById("question").style.display = "none"
+                currentAnswer = answers[option]
+                socket.emit('ANSWER', currentAnswer)
+            }
+
+            function chooseFamilly(option){
+                data = famillies[option][0]
+                socket.emit('FAMILLY_ANSWER', data)
+            }
+
+            function hideAll(){
+                document.getElementById("login").style.display = "none"
+                document.getElementById("familly").style.display = "none"
+                document.getElementById("question").style.display = "none"
+                document.getElementById("wait").style.display = "none"
+                document.getElementById("correct").style.display = "none"
+            }
+        </script>
+    </body>
+</html>

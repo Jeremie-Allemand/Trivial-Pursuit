@@ -49,7 +49,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js" integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.0/axios.js" integrity="sha512-MNW6IbpNuZZ2VH9ngFhzh6cUt8L/0rSVa60F8L22K1H72ro4Ki3M/816eSDLnhICu7vwH/+/yb8oB3BtBLhMsA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script>
-            server = "http://"+ window.location.hostname + ":3001"
+            server = "http://"+ window.location.host
             const socket = io(server)
             var answers = [] 
             var famillies = []
@@ -119,7 +119,6 @@
 
             function login() {
                 const name = document.getElementById("username").value 
-                //requête http post pour se connecter
                 axios.post(server+"/addplayer",{username:name, socket_id:socket.id})
                 .then(result => {
                     if(result.data.login === "OK"){

@@ -37,6 +37,13 @@ app.use('/admin', function(req,res){
   res.sendFile(global.link + '/admin.html')
 })
 
+app.use('/react', function(req,res){
+  res.sendFile(global.link + '/indexReact.html')
+})
+
+app.use('/reactadmin', function(req,res){
+  res.sendFile(global.link + '/adminReact.html')
+})
 require('./routes/game.route')(app)
 importCSV()
 
@@ -95,9 +102,9 @@ function turnStart(){
 
 function famillyRequest(){
   shuffleArray(global.famillies)
-  famillies = [global.famillies[0],global.famillies[1]]
+  familliesToSend = [global.famillies[0],global.famillies[1]]
   io.sockets.emit('WAIT')
-  io.to(global.players[global.player_no].socket_id).emit('FAMILLY',famillies)
+  io.to(global.players[global.player_no].socket_id).emit('FAMILLY',familliesToSend)
 }
 
 function questionSend(familly){
